@@ -1,0 +1,58 @@
+# -------------------------------------------------------------------------
+# Flutter / Dart Tools
+# -------------------------------------------------------------------------
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+
+# -------------------------------------------------------------------------
+# Android Specifics
+# -------------------------------------------------------------------------
+.gradle/
+local.properties
+**/android/flutter_plugin_actions.json
+*.ini
+*.apk
+*.ap_
+*.aab
+
+# -------------------------------------------------------------------------
+# iOS/macOS Specifics
+# -------------------------------------------------------------------------
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/macOS/Flutter/GeneratedPluginRegistrant.swift
+Pods/
+DerivedData/
+.xcworkspace/
+!.pcode
+
+# -------------------------------------------------------------------------
+# Development Tools and IDEs
+# -------------------------------------------------------------------------
+# Visual Studio Code
+.vscode/
+
+# IntelliJ / Android Studio
+.idea/
+*.iml
+*.iws
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# -------------------------------------------------------------------------
+# Secrets and Environment Variables
+# -------------------------------------------------------------------------
+.env
+*.jks
+*.keystore
+**/android/key.properties
