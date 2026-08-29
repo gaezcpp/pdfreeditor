@@ -1,0 +1,76 @@
+from __future__ import annotations
+
+from fastapi import APIRouter, Response, status
+
+from app.api.deps import CurrentUser, DbSession
+from app.schemas.auth import (
+    LoginRequest,
+    RefreshRequest,
+    RegisterRequest,
+    TokenResponse,
+)
+from app.schemas.user import UserOut
+from app.services import auth as auth_service
+
+router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+@router.post(
+    "/register",
+    response_model=TokenResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def register(payload: RegisterRequest, db: DbSession) -> TokenResponse:
+    """Create an account and sign the device in immediately."""
+    user = await auth_service.register(
+        db,
+        email=payload.email,
+        password=payload.password,
+        full_name=payload.full_name,
+    )
+    access, refresh, expires_in = await auth_service.issue_tokens(
+        db, user, device_label=payload.device_label
+    )
+    await db.commit()
+    return TokenResponse(
+        access_token=access, refresh_token=refresh, expires_in=expires_in
+    )
+
+
+@router.post("/login", response_model=TokenResponse)
+async def login(payload: LoginRequest, db: DbSession) -> TokenResponse:
+    user = await auth_service.authenticate(
+        db, email=payload.email, password=payload.password
+    )
+    access, refresh, expires_in = await auth_service.issue_tokens(
+        db, user, device_label=payload.device_label
+    )
+    await db.commit()
+    return TokenResponse(
+        access_token=access, refresh_token=refresh, expires_in=expires_in
+    )
+
+
+@router.post("/refresh", response_model=TokenResponse)
+async def refresh(payload: RefreshRequest, db: DbSession) -> TokenResponse:
+    """Rotate a refresh token: the old one is revoked as the new pair is issued."""
+    _, access, new_refresh, expires_in = await auth_service.rotate_refresh_token(
+        db, raw_token=payload.refresh_token
+    )
+    await db.commit()
+    return TokenResponse(
+        access_token=access, refresh_token=new_refresh, expires_in=expires_in
+    )
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+async def logout(payload: RefreshRequest, db: DbSession) -> Response:
+    """Sign out one device. Idempotent — an unknown token still returns 204."""
+    await auth_service.revoke_refresh_token(db, raw_token=payload.refresh_token)
+    await db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/me", response_model=UserOut)
+async def me(user: CurrentUser) -> UserOut:
+    return UserOut.model_validate(user)

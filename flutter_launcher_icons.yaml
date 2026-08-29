@@ -1,0 +1,23 @@
+# Regenerate after changing assets/icon/*:
+#   dart run flutter_launcher_icons
+#
+# Only the platforms this project targets. The source art is assets/icon/*.svg;
+# the PNGs beside them are rendered from it (see README).
+flutter_launcher_icons:
+  image_path: "assets/icon/icon.png"
+
+  android: true
+  adaptive_icon_background: "#B3261E"
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"
+
+  web:
+    generate: true
+    image_path: "assets/icon/icon.png"
+    background_color: "#B3261E"
+    theme_color: "#B3261E"
+
+  ios: false
+  windows:
+    generate: false
+  macos:
+    generate: false

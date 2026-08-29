@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Android crops an adaptive icon to roughly the middle 66%, so the artwork
+       is scaled into that safe zone rather than filling the canvas. -->
+  <g transform="translate(512 512) scale(0.62) translate(-512 -512)">
+    <path d="M296 208 h286 l150 150 v458 a40 40 0 0 1 -40 40 H296 a40 40 0 0 1 -40 -40 V248 a40 40 0 0 1 40 -40 z"
+          fill="#FFFFFF"/>
+    <path d="M582 208 l150 150 h-118 a32 32 0 0 1 -32 -32 z" fill="#F0C9C5"/>
+
+    <rect x="336" y="430" width="330" height="34" rx="17" fill="#8C1D18"/>
+    <rect x="336" y="512" width="250" height="34" rx="17" fill="#D6A6A1"/>
+    <rect x="336" y="594" width="150" height="34" rx="17" fill="#D6A6A1"/>
+
+    <g transform="rotate(-45 690 610)">
+      <rect x="646" y="470" width="88" height="230" rx="16" fill="#F2B23E"/>
+      <rect x="646" y="470" width="88" height="46" rx="16" fill="#D2932A"/>
+      <path d="M646 700 h88 l-44 78 z" fill="#3A2E2A"/>
+      <path d="M668 742 h44 l-22 36 z" fill="#1C1613"/>
+    </g>
+  </g>
+</svg>

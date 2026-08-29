@@ -1,8 +1,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The app talks to the PDF backend over HTTP. The debug and profile
+         manifests declare this too, but release builds only get what is
+         declared here. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- connectivity_plus reads the current network type before large uploads. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
     <application
-        android:label="pdfreeditor"
+        android:label="PDFree Editor"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:networkSecurityConfig="@xml/network_security_config">
         <activity
             android:name=".MainActivity"
             android:exported="true"

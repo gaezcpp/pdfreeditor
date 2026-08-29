@@ -1,0 +1,7 @@
+# Declares the tags used in test/, so the runner does not warn about them.
+tags:
+  contract:
+    # Tests in test/contract_test.dart need a running backend. They skip
+    # themselves when none is reachable; tag them to exclude them outright:
+    #   flutter test --exclude-tags contract
+    description: Requires a running backend at API_BASE_URL.

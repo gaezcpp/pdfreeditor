@@ -1,11 +1,11 @@
 {
-    "name": "pdfreeditor",
-    "short_name": "pdfreeditor",
+    "name": "PDFree Editor",
+    "short_name": "PDFree",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#B3261E",
+    "theme_color": "#B3261E",
+    "description": "Edit the text and images inside a PDF, right in your browser.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

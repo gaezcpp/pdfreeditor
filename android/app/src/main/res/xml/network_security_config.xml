@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 9 (API 28) and later block cleartext HTTP by default, so a release
+  build silently fails to reach a plain-HTTP dev server on the LAN.
+
+  Rather than switching cleartext on for everything, it is permitted only for
+  the development hosts listed below. Everything else still requires HTTPS.
+
+  Add your machine's LAN address here when it changes (`ipconfig` on Windows,
+  `ifconfig` elsewhere), and delete these entries once the backend is behind
+  real HTTPS.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- The Android emulator's route to the host machine. -->
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <!-- A backend running on the device itself. -->
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <!-- This laptop on the local network, for testing on a real phone. -->
+        <domain includeSubdomains="false">192.168.1.23</domain>
+    </domain-config>
+</network-security-config>

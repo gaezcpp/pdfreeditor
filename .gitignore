@@ -50,6 +50,21 @@ DerivedData/
 Thumbs.db
 
 # -------------------------------------------------------------------------
+# Python Backend
+# -------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+backend/var/
+!backend/alembic.ini
+
+# -------------------------------------------------------------------------
 # Secrets and Environment Variables
 # -------------------------------------------------------------------------
 .env
