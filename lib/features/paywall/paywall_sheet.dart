@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/config.dart';
 import '../auth/session_controller.dart';
 
 /// Shows the upgrade sheet.
@@ -85,16 +87,34 @@ class _PaywallSheet extends StatelessWidget {
             ],
 
             const SizedBox(height: 24),
-            // Store billing is not wired up yet, so this deliberately does not
-            // pretend to charge anyone. It refreshes entitlement instead, which
-            // is what the real purchase flow will do once it lands.
+            if (AppConfig.telegramUsername.isNotEmpty)
+              OutlinedButton.icon(
+                onPressed: () => _openContact(
+                  context,
+                  Uri.parse('https://t.me/${AppConfig.telegramUsername}'),
+                ),
+                icon: const Icon(Icons.send),
+                label: const Text('Upgrade via Telegram'),
+              ),
+            if (AppConfig.whatsappNumber.isNotEmpty)
+              OutlinedButton.icon(
+                onPressed: () => _openContact(
+                  context,
+                  Uri.parse(
+                    'https://wa.me/${AppConfig.whatsappNumber}?text='
+                    '${Uri.encodeComponent('Halo, saya ingin upgrade PDFree Premium.')}',
+                  ),
+                ),
+                icon: const Icon(Icons.chat),
+                label: const Text('Upgrade via WhatsApp'),
+              ),
             FilledButton(
               onPressed: () => _notifyBillingPending(context),
-              child: const Text('Upgrade'),
+              child: const Text('Request premium'),
             ),
             const SizedBox(height: 4),
             Text(
-              'In-app purchases are not connected yet.',
+              'Premium activation is currently handled by an administrator.',
               textAlign: TextAlign.center,
               style: textTheme.bodySmall?.copyWith(color: scheme.outline),
             ),
@@ -109,14 +129,22 @@ class _PaywallSheet extends StatelessWidget {
     final messenger = ScaffoldMessenger.of(context);
     Navigator.of(context).pop();
 
-    await session.refreshStatus();
+    await session.requestPremium();
     messenger.showSnackBar(
       const SnackBar(
         content: Text(
-          'Billing is not connected yet. Premium can only be granted from the '
-          'server for now.',
+          'Payment is not connected yet. Ask an administrator to activate '
+          'permanent premium for your account.',
         ),
       ),
+    );
+  }
+
+  Future<void> _openContact(BuildContext context, Uri uri) async {
+    if (await launchUrl(uri, mode: LaunchMode.externalApplication)) return;
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Tidak dapat membuka aplikasi kontak.')),
     );
   }
 }

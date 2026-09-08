@@ -27,6 +27,18 @@ class AuthRepository {
   Future<void> login({required String email, required String password}) =>
       _postForSession('/auth/login', {'email': email, 'password': password});
 
+  Future<void> requestPasswordReset(String email) async {
+    try {
+      await _client.dio.post<void>(
+        '/auth/password-reset/request',
+        data: {'email': email},
+        options: Options(extra: ApiClient.unauthenticated),
+      );
+    } on DioException catch (error) {
+      throw error.asApiException;
+    }
+  }
+
   /// Revokes this device's refresh token, then clears local state.
   ///
   /// Local state is cleared even if the call fails — the user asked to be

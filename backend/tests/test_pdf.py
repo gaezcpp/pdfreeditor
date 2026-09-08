@@ -121,6 +121,24 @@ def test_compress_produces_a_readable_pdf(make_pdf, tmp_path: Path):
     assert operations.inspect(destination).page_count == 3
 
 
+def test_page_operations_preserve_requested_structure(make_pdf, tmp_path: Path):
+    source = make_pdf("source.pdf", pages=3)
+    rotated = tmp_path / "rotated.pdf"
+    trimmed = tmp_path / "trimmed.pdf"
+    reordered = tmp_path / "reordered.pdf"
+
+    operations.rotate_pages(source, rotated, pages=[1], degrees=90)
+    with pymupdf.open(rotated) as doc:
+        assert doc[0].rotation == 90
+
+    operations.delete_pages(source, trimmed, pages=[2])
+    assert operations.inspect(trimmed).page_count == 2
+
+    operations.reorder_pages(source, reordered, order=[3, 1, 2])
+    with pymupdf.open(reordered) as doc:
+        assert "Page 3" in doc[0].get_text()
+
+
 @pytest.mark.parametrize(
     ("spec", "expected"),
     [

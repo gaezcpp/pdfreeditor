@@ -13,6 +13,7 @@ from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.errors import register_exception_handlers
 from app.db.session import SessionFactory, engine
+from app.middleware.rate_limit import InMemoryRateLimitMiddleware
 from app.services import editor
 from app.services.pdf.storage import TempWorkspace
 
@@ -46,6 +47,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
         expose_headers=["Content-Disposition", "X-Quota-Remaining"],
     )
+    app.add_middleware(InMemoryRateLimitMiddleware)
 
     register_exception_handlers(app)
     app.include_router(api_router, prefix=settings.api_v1_prefix)

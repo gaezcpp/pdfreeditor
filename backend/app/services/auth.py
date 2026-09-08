@@ -12,12 +12,14 @@ from app.core.config import settings
 from app.core.errors import AuthenticationError, ConflictError
 from app.core.security import (
     create_access_token,
+    generate_password_reset_token,
     generate_refresh_token,
     hash_password,
     hash_refresh_token,
     verify_password,
 )
 from app.core.timeutils import utcnow
+from app.models.password_reset import PasswordResetToken
 from app.models.refresh_token import RefreshToken
 from app.models.user import User
 from app.services import quota
@@ -125,6 +127,45 @@ async def revoke_refresh_token(db: AsyncSession, *, raw_token: str) -> None:
     token = result.scalar_one_or_none()
     if token is not None and token.revoked_at is None:
         token.revoked_at = utcnow()
+
+
+async def request_password_reset(db: AsyncSession, *, email: str) -> str | None:
+    result = await db.execute(select(User).where(User.email == normalize_email(email)))
+    user = result.scalar_one_or_none()
+    if user is None or not user.is_active:
+        return None
+    raw, token_hash = generate_password_reset_token()
+    db.add(
+        PasswordResetToken(
+            user_id=user.id,
+            token_hash=token_hash,
+            expires_at=utcnow()
+            + timedelta(minutes=settings.password_reset_expire_minutes),
+        )
+    )
+    await db.flush()
+    return raw
+
+
+async def reset_password(db: AsyncSession, *, raw_token: str, password: str) -> None:
+    result = await db.execute(
+        select(PasswordResetToken).where(
+            PasswordResetToken.token_hash == hash_refresh_token(raw_token)
+        )
+    )
+    token = result.scalar_one_or_none()
+    if token is None or token.used_at is not None or token.expires_at <= utcnow():
+        raise AuthenticationError("This password reset link is invalid or expired.")
+    user = await db.get(User, token.user_id)
+    if user is None or not user.is_active:
+        raise AuthenticationError("This password reset link is invalid or expired.")
+    user.password_hash = hash_password(password)
+    token.used_at = utcnow()
+    result = await db.execute(
+        select(RefreshToken).where(RefreshToken.user_id == user.id)
+    )
+    for refresh in result.scalars():
+        refresh.revoked_at = utcnow()
 
 
 # A valid bcrypt hash of a value nothing can match, used for timing parity.

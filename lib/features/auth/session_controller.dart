@@ -63,6 +63,9 @@ class SessionController extends ChangeNotifier {
   Future<bool> login({required String email, required String password}) =>
       _authenticate(() => _auth.login(email: email, password: password));
 
+  Future<void> requestPasswordReset(String email) =>
+      _auth.requestPasswordReset(email);
+
   Future<bool> register({
     required String email,
     required String password,
@@ -96,6 +99,8 @@ class SessionController extends ChangeNotifier {
     await _loadStatus();
     notifyListeners();
   }
+
+  Future<void> requestPremium() => _users.requestPremium();
 
   /// Applies the `X-Quota-Remaining` header from a completed edit.
   ///

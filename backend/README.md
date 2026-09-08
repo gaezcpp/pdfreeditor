@@ -14,6 +14,31 @@ target; the schema and migrations are identical either way.
 
 ## Setup
 
+### Option A — Docker (recommended)
+
+PostgreSQL + API, migrations included. From this directory:
+
+```bash
+cp .env.example .env
+# put a real SECRET_KEY in .env, e.g.:
+docker run --rm python:3.11-slim python -c "import secrets; print(secrets.token_urlsafe(64))"
+```
+
+```bash
+docker compose up --build
+```
+
+The API lands on `http://localhost:8000` (`/docs` included outside
+production). The entrypoint runs `alembic upgrade head` on every start, so no
+separate migrate step. Data lives in the `pgdata` volume; `docker compose down
+-v` drops it. If you built the Flutter web app (`flutter build web` in the
+project root), it is served at the same origin automatically.
+
+SQLite remains the fallback for runs without Docker (and for the test suite),
+via `DATABASE_URL` in `.env`.
+
+### Option B — local virtualenv
+
 ```bash
 py -3.11 -m venv .venv
 ```
@@ -226,10 +251,23 @@ and unthrottled auth endpoints, on an address anyone holding it can reach.
 Billing is not wired up, so premium is granted from the server:
 
 ```bash
-.venv/Scripts/python.exe -m scripts.grant_premium grant you@example.com --days 30
+# Docker is running:
+docker compose exec api python -m scripts.grant_premium grant you@example.com --permanent
+
+# Temporary premium remains available:
+docker compose exec api python -m scripts.grant_premium grant you@example.com --days 30
 ```
 
-Also `status`, `revoke`, and `list`. This is a CLI rather than an endpoint on
+Also `status`, `revoke`, and `list`:
+
+```bash
+docker compose exec api python -m scripts.grant_premium status you@example.com
+docker compose exec api python -m scripts.grant_premium revoke you@example.com
+docker compose exec api python -m scripts.grant_premium list
+```
+
+`--permanent` creates an active manual subscription with no expiry. It stays
+unlimited until an administrator runs `revoke`. This is a CLI rather than an endpoint on
 purpose — an HTTP route that hands out premium is a privilege escalation, and
 there is no reason to expose one just for convenience. When store receipts land,
 that flow calls the same `services/subscription.py` code and this stays as the
@@ -242,3 +280,19 @@ support tool.
   seam.
 * Rate limiting per IP/user on the auth endpoints.
 * Email verification and password reset.
+# Password reset
+
+Set `SMTP_HOST`, `SMTP_FROM`, and credentials before production. Request endpoint
+always returns the same message to prevent account enumeration:
+
+`POST /api/v1/auth/password-reset/request`
+
+Confirm with token from email:
+
+`POST /api/v1/auth/password-reset/confirm`
+
+# Page tools
+
+`POST /api/v1/pdf/rotate`, `/delete-pages`, and `/reorder-pages` accept multipart
+PDF uploads. Page lists use `1-3,7`; reorder uses a complete comma-separated
+permutation such as `3,1,2`.

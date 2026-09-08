@@ -29,6 +29,14 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 30
+    password_reset_expire_minutes: int = 30
+    password_reset_url: str = "http://localhost:8000/reset-password"  # noqa: S105
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_username: str | None = None
+    smtp_password: str | None = None
+    smtp_from: str = "noreply@localhost"
+    smtp_starttls: bool = True
 
     # --- Database ------------------------------------------------------------
     database_url: str = "postgresql+asyncpg://pdfree:pdfree@localhost:5432/pdfree"
@@ -64,11 +72,18 @@ class Settings(BaseSettings):
     # types straight from the environment, before any validator runs, so a
     # plain `CORS_ORIGINS=*` would fail to parse. Split in `allowed_origins`.
     cors_origins: str = "*"
+    admin_contact_url: str = "mailto:admin@example.com"
+    admin_email: str | None = None
+    rate_limit_requests: int = 120
+    rate_limit_window_seconds: int = 60
 
     @property
     def allowed_origins(self) -> list[str]:
         """CORS origins, comma-separated in the environment."""
-        return [item.strip() for item in self.cors_origins.split(",") if item.strip()]
+        origins = [item.strip() for item in self.cors_origins.split(",") if item.strip()]
+        if self.is_production and "*" in origins:
+            raise RuntimeError("CORS_ORIGINS must list explicit origins in production.")
+        return origins
 
     @property
     def is_production(self) -> bool:

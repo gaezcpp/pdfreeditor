@@ -21,10 +21,10 @@ abstract final class AppConfig {
   /// and would otherwise be sent to the emulator's host address.
   static const int _devPort = 8000;
 
-  /// A hard-coded LAN address for Android, so a debug APK works without
-  /// `--dart-define`. It is only a default: the in-app server field overrides
-  /// it, which is what to use when this machine's IP changes.
-  static const String _androidDevHost = '192.168.1.23';
+  /// The emulator's route to the host machine, where `docker compose up`
+  /// serves the backend. Physical devices on the LAN use the hidden override
+  /// (5 taps on the sign-in logo) when the laptop's address differs.
+  static const String _androidDevHost = '10.0.2.2';
 
   static String get defaultBaseUrl {
     if (_override.isNotEmpty) return _override;
@@ -43,6 +43,13 @@ abstract final class AppConfig {
   }
 
   static const String apiPrefix = '/api/v1';
+
+  /// Set with `--dart-define=TELEGRAM_USERNAME=...` and
+  /// `--dart-define=WHATSAPP_NUMBER=...` for manual premium sales.
+  static const String telegramUsername =
+      String.fromEnvironment('TELEGRAM_USERNAME', defaultValue: 'sherdderz');
+  static const String whatsappNumber =
+      String.fromEnvironment('WHATSAPP_NUMBER', defaultValue: '6289618547500');
 
   /// Mirrors the backend's own cap, so an oversized file is caught before it
   /// is uploaded rather than after.

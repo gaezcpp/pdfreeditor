@@ -26,6 +26,112 @@ from app.services.pdf.storage import TempWorkspace, save_upload
 router = APIRouter(prefix="/pdf", tags=["pdf"])
 
 
+async def _page_operation(
+    *, user, db, file, action: PdfAction, pages: list[int], operation, suffix: str
+) -> FileResponse:
+    async def produce(workspace: TempWorkspace) -> EditResult:
+        source, size = await save_upload(file, workspace)
+        info = await run_in_threadpool(operations.inspect, source)
+        destination = workspace.new_path()
+        await run_in_threadpool(operation, source, destination, pages=pages)
+        return EditResult(
+            path=destination,
+            filename=_output_name(file, suffix),
+            page_count=info.page_count,
+            input_bytes=size,
+        )
+
+    return await run_edit(db, user, action=action, produce=produce)
+
+
+def _parse_pages(value: str, page_count: int) -> list[int]:
+    groups = ranges.parse_ranges(value, page_count=page_count)
+    return [page for group in groups for page in group]
+
+
+@router.post("/rotate", response_class=FileResponse)
+async def rotate(
+    user: CurrentUser, db: DbSession,
+    file: Annotated[UploadFile, File()],
+    pages: Annotated[str, Form(min_length=1, max_length=500)],
+    degrees: Annotated[int, Form()] = 90,
+) -> FileResponse:
+    async def operation(source, destination, *, pages):
+        await run_in_threadpool(
+            operations.rotate_pages,
+            source,
+            destination,
+            pages=pages,
+            degrees=degrees,
+        )
+
+    async def produce(workspace):
+        source, size = await save_upload(file, workspace)
+        info = await run_in_threadpool(operations.inspect, source)
+        destination = workspace.new_path()
+        page_list = _parse_pages(pages, info.page_count)
+        await operation(source, destination, pages=page_list)
+        return EditResult(
+            path=destination,
+            filename=_output_name(file, "rotated"),
+            page_count=info.page_count,
+            input_bytes=size,
+        )
+
+    return await run_edit(db, user, action=PdfAction.ROTATE, produce=produce)
+
+
+@router.post("/delete-pages", response_class=FileResponse)
+async def delete_pages(
+    user: CurrentUser, db: DbSession,
+    file: Annotated[UploadFile, File()],
+    pages: Annotated[str, Form(min_length=1, max_length=500)],
+) -> FileResponse:
+    async def produce(workspace):
+        source, size = await save_upload(file, workspace)
+        info = await run_in_threadpool(operations.inspect, source)
+        destination = workspace.new_path()
+        page_list = _parse_pages(pages, info.page_count)
+        await run_in_threadpool(
+            operations.delete_pages, source, destination, pages=page_list
+        )
+        return EditResult(
+            path=destination,
+            filename=_output_name(file, "trimmed"),
+            page_count=info.page_count - len(set(page_list)),
+            input_bytes=size,
+        )
+
+    return await run_edit(db, user, action=PdfAction.DELETE_PAGES, produce=produce)
+
+
+@router.post("/reorder-pages", response_class=FileResponse)
+async def reorder_pages(
+    user: CurrentUser, db: DbSession,
+    file: Annotated[UploadFile, File()],
+    order: Annotated[str, Form(min_length=1, max_length=2000)],
+) -> FileResponse:
+    async def produce(workspace):
+        source, size = await save_upload(file, workspace)
+        info = await run_in_threadpool(operations.inspect, source)
+        destination = workspace.new_path()
+        try:
+            page_order = [int(item.strip()) for item in order.split(",")]
+        except ValueError as exc:
+            raise InvalidPdfError("Order must be comma-separated page numbers.") from exc
+        await run_in_threadpool(
+            operations.reorder_pages, source, destination, order=page_order
+        )
+        return EditResult(
+            path=destination,
+            filename=_output_name(file, "reordered"),
+            page_count=info.page_count,
+            input_bytes=size,
+        )
+
+    return await run_edit(db, user, action=PdfAction.REORDER_PAGES, produce=produce)
+
+
 @router.post("/compress", response_class=FileResponse)
 async def compress(
     user: CurrentUser,

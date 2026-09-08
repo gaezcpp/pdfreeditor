@@ -24,6 +24,7 @@ class _LoginPageState extends State<LoginPage> {
 
   bool _isRegistering = false;
   bool _obscurePassword = true;
+  int _serverTaps = 0;
 
   @override
   void dispose() {
@@ -49,9 +50,43 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  Future<void> _forgotPassword() async {
+    if (!_email.text.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter email first.')),
+      );
+      return;
+    }
+    try {
+      await context.read<SessionController>().requestPasswordReset(_email.text.trim());
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('If account exists, reset instructions were sent.')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not request reset. Try again later.')),
+      );
+    }
+  }
+
   void _toggleMode() {
     setState(() => _isRegistering = !_isRegistering);
     context.read<SessionController>().clearAuthRequest();
+  }
+
+  /// Hidden escape hatch for the server address (tap the logo 5 times).
+  ///
+  /// The backend now starts with `docker compose up`, so the address field is
+  /// deliberately not shown — but a phone on a new network still needs a way
+  /// to point at a moved backend without a rebuild.
+  void _onLogoTap() {
+    _serverTaps++;
+    if (_serverTaps >= 5) {
+      _serverTaps = 0;
+      showServerAddressSheet(context);
+    }
   }
 
   @override
@@ -72,10 +107,13 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(
-                      Icons.picture_as_pdf,
-                      size: 64,
-                      color: Theme.of(context).colorScheme.primary,
+                    GestureDetector(
+                      onTap: _onLogoTap,
+                      child: Icon(
+                        Icons.picture_as_pdf,
+                        size: 64,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -147,6 +185,14 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       validator: _validatePassword,
                     ),
+                    if (!_isRegistering)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: isBusy ? null : _forgotPassword,
+                          child: const Text('Forgot password?'),
+                        ),
+                      ),
 
                     if (request case Failure(:final error)) ...[
                       const SizedBox(height: 16),
@@ -172,10 +218,6 @@ class _LoginPageState extends State<LoginPage> {
                             : "New here? Create an account",
                       ),
                     ),
-                    const Divider(height: 32),
-                    // If this is wrong you cannot sign in at all, so it belongs
-                    // on this screen and not behind one.
-                    const ServerAddressButton(),
                   ],
                 ),
               ),

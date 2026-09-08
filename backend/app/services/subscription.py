@@ -37,7 +37,10 @@ async def sync_entitlement(
     granting = [sub for sub in subscriptions if sub.grants_premium_at(now)]
     if granting:
         user.plan = Plan.PREMIUM
-        user.premium_until = max(as_utc(sub.current_period_end) for sub in granting)
+        permanent = [sub for sub in granting if sub.current_period_end is None]
+        user.premium_until = None if permanent else max(
+            as_utc(sub.current_period_end) for sub in granting
+        )
     else:
         user.plan = Plan.FREE
         user.premium_until = None
@@ -49,7 +52,7 @@ async def grant_manual_premium(
     db: AsyncSession,
     user_id: uuid.UUID,
     *,
-    until: datetime,
+    until: datetime | None,
     product_id: str = "premium.manual",
 ) -> User:
     """Grant premium without a store purchase — support credits, testing, comps."""
@@ -67,6 +70,8 @@ async def grant_manual_premium(
             status=SubscriptionStatus.ACTIVE,
             auto_renew=False,
             current_period_start=now,
+            # NULL means no expiry. The entitlement query treats this as
+            # permanent while the row remains active.
             current_period_end=until,
         )
     )

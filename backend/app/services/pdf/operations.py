@@ -110,6 +110,58 @@ def extract_pages(source: Path, destination: Path, *, pages: list[int]) -> Path:
     return destination
 
 
+def rotate_pages(
+    source: Path, destination: Path, *, pages: list[int], degrees: int
+) -> Path:
+    if degrees not in {90, 180, 270}:
+        raise InvalidPdfError("Rotation must be 90, 180, or 270 degrees.")
+    try:
+        with pymupdf.open(source) as doc:
+            for page_number in pages:
+                if not 1 <= page_number <= doc.page_count:
+                    raise InvalidPdfError(f"Page {page_number} does not exist.")
+                doc[page_number - 1].set_rotation(
+                    (doc[page_number - 1].rotation + degrees) % 360
+                )
+            doc.save(destination, garbage=4, deflate=True)
+    except InvalidPdfError:
+        raise
+    except Exception as exc:
+        raise PdfProcessingError("Could not rotate these pages.") from exc
+    return destination
+
+
+def delete_pages(source: Path, destination: Path, *, pages: list[int]) -> Path:
+    try:
+        with pymupdf.open(source) as doc:
+            if len(pages) >= doc.page_count:
+                raise InvalidPdfError("A PDF must keep at least one page.")
+            for page_number in sorted(set(pages), reverse=True):
+                if not 1 <= page_number <= doc.page_count:
+                    raise InvalidPdfError(f"Page {page_number} does not exist.")
+                doc.delete_page(page_number - 1)
+            doc.save(destination, garbage=4, deflate=True)
+    except InvalidPdfError:
+        raise
+    except Exception as exc:
+        raise PdfProcessingError("Could not delete these pages.") from exc
+    return destination
+
+
+def reorder_pages(source: Path, destination: Path, *, order: list[int]) -> Path:
+    try:
+        with pymupdf.open(source) as doc:
+            if sorted(order) != list(range(1, doc.page_count + 1)):
+                raise InvalidPdfError("Order must contain every page exactly once.")
+            doc.select([page - 1 for page in order])
+            doc.save(destination, garbage=4, deflate=True)
+    except InvalidPdfError:
+        raise
+    except Exception as exc:
+        raise PdfProcessingError("Could not reorder these pages.") from exc
+    return destination
+
+
 def split_to_zip(
     source: Path,
     destination: Path,

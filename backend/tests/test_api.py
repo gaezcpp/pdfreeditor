@@ -151,6 +151,23 @@ async def test_premium_bypasses_the_quota(client, auth, db):
     assert body["quota"]["limit"] is None
 
 
+async def test_permanent_premium_bypasses_the_quota(client, auth, db):
+    from sqlalchemy import select
+
+    from app.models.user import User
+
+    found = await db.execute(select(User).where(User.email == "user@example.com"))
+    user = found.scalar_one()
+    await subscription.grant_manual_premium(db, user.id, until=None)
+    await db.commit()
+
+    response = await client.post(COMPRESS, headers=auth, files=upload())
+    assert response.status_code == 200
+    body = (await client.get(STATUS, headers=auth)).json()
+    assert body["is_premium"] is True
+    assert body["premium_until"] is None
+
+
 async def test_temp_files_are_cleaned_up(client, auth):
     from app.core.config import settings
 

@@ -87,3 +87,8 @@ def generate_refresh_token() -> tuple[str, str]:
 
 def hash_refresh_token(raw: str) -> str:
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def generate_password_reset_token() -> tuple[str, str]:
+    raw = secrets.token_urlsafe(48)
+    return raw, hash_refresh_token(raw)

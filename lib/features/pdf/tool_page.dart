@@ -49,6 +49,7 @@ class _ToolViewState extends State<_ToolView> {
 
   bool _recompressImages = false;
   double _imageQuality = 70;
+  int _degrees = 90;
 
   @override
   void dispose() {
@@ -73,6 +74,7 @@ class _ToolViewState extends State<_ToolView> {
         page: int.tryParse(_page.text.trim()),
         x: double.tryParse(_x.text.trim()),
         y: double.tryParse(_y.text.trim()),
+        degrees: _degrees,
       ),
     );
 
@@ -161,6 +163,39 @@ class _ToolViewState extends State<_ToolView> {
             validator: (value) => (value?.trim().isEmpty ?? true)
                 ? 'Enter at least one page or range.'
                 : null,
+          ),
+        ];
+
+      case PdfTool.rotate:
+        return [
+          TextFormField(
+            controller: _pageRanges,
+            decoration: const InputDecoration(labelText: 'Pages', helperText: 'e.g. 1-3,7'),
+            validator: (value) => value?.trim().isEmpty ?? true ? 'Enter pages.' : null,
+          ),
+          DropdownButtonFormField<int>(
+            initialValue: _degrees,
+            decoration: const InputDecoration(labelText: 'Rotation'),
+            items: const [90, 180, 270].map((value) => DropdownMenuItem(value: value, child: Text('$value degrees'))).toList(),
+            onChanged: (value) => setState(() => _degrees = value ?? 90),
+          ),
+        ];
+
+      case PdfTool.deletePages:
+        return [
+          TextFormField(
+            controller: _pageRanges,
+            decoration: const InputDecoration(labelText: 'Pages to delete', helperText: 'e.g. 2,4-5'),
+            validator: (value) => value?.trim().isEmpty ?? true ? 'Enter pages.' : null,
+          ),
+        ];
+
+      case PdfTool.reorderPages:
+        return [
+          TextFormField(
+            controller: _pageRanges,
+            decoration: const InputDecoration(labelText: 'New order', helperText: 'e.g. 3,1,2'),
+            validator: (value) => value?.trim().isEmpty ?? true ? 'Enter page order.' : null,
           ),
         ];
 

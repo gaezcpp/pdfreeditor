@@ -85,6 +85,15 @@ class PdfRepository {
         onProgress: onProgress,
       );
 
+  Future<EditedFile> rotate(PickedFile file, {required String pages, required int degrees, ProgressCallback? onProgress}) =>
+      _run(PdfTool.rotate, files: [file], fields: {'pages': pages, 'degrees': degrees}, onProgress: onProgress);
+
+  Future<EditedFile> deletePages(PickedFile file, {required String pages, ProgressCallback? onProgress}) =>
+      _run(PdfTool.deletePages, files: [file], fields: {'pages': pages}, onProgress: onProgress);
+
+  Future<EditedFile> reorderPages(PickedFile file, {required String order, ProgressCallback? onProgress}) =>
+      _run(PdfTool.reorderPages, files: [file], fields: {'order': order}, onProgress: onProgress);
+
   Future<EditedFile> _run(
     PdfTool tool, {
     required List<PickedFile> files,

@@ -33,6 +33,9 @@ class PdfAction(StrEnum):
     SPLIT = "split"
     ADD_TEXT = "add_text"
     EDIT = "edit"  # a saved WYSIWYG editing session, however many tweaks it held
+    ROTATE = "rotate"
+    DELETE_PAGES = "delete_pages"
+    REORDER_PAGES = "reorder_pages"
 
 
 class UsageStatus(StrEnum):

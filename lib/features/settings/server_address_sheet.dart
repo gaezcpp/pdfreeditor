@@ -6,9 +6,10 @@ import '../auth/session_controller.dart';
 
 /// Lets the user point the app at a different backend.
 ///
-/// Reachable from the sign-in screen as well as from Home: if the address is
-/// wrong you cannot sign in, so hiding this behind a signed-in settings page
-/// would put it out of reach exactly when it is needed.
+/// Deliberately reachable only through a hidden gesture (5 taps on the
+/// sign-in logo): with the backend on `docker compose up` there is nothing to
+/// configure in the normal case, but a device on a new network still needs an
+/// escape hatch that does not require a rebuild.
 Future<void> showServerAddressSheet(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,

@@ -110,6 +110,16 @@ class EditController extends ChangeNotifier {
             color: options.color,
             onProgress: _reportProgress,
           ),
+        PdfTool.rotate => _repository.rotate(
+            _files.first, pages: options.pageRanges!, degrees: options.degrees,
+            onProgress: _reportProgress,
+          ),
+        PdfTool.deletePages => _repository.deletePages(
+            _files.first, pages: options.pageRanges!, onProgress: _reportProgress,
+          ),
+        PdfTool.reorderPages => _repository.reorderPages(
+            _files.first, order: options.pageRanges!, onProgress: _reportProgress,
+          ),
       };
 
       _session.applyQuotaAfterEdit(result.quotaRemaining);
@@ -139,6 +149,7 @@ class EditOptions {
     this.y,
     this.fontSize = 12,
     this.color = '#000000',
+    this.degrees = 90,
   });
 
   final int? imageQuality;
@@ -149,4 +160,5 @@ class EditOptions {
   final double? y;
   final double fontSize;
   final String color;
+  final int degrees;
 }

@@ -49,8 +49,8 @@ class Subscription(TimestampMixin, Base):
     current_period_start: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
-    current_period_end: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
+    current_period_end: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
     )
     canceled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
@@ -58,7 +58,10 @@ class Subscription(TimestampMixin, Base):
 
     def grants_premium_at(self, now: datetime) -> bool:
         active = self.status in {SubscriptionStatus.ACTIVE, SubscriptionStatus.IN_GRACE}
-        return active and as_utc(self.current_period_end) > as_utc(now)
+        return active and (
+            self.current_period_end is None
+            or as_utc(self.current_period_end) > as_utc(now)
+        )
 
     @property
     def is_store_purchase(self) -> bool:

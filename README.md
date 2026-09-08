@@ -14,7 +14,13 @@ uploads them, and saves what comes back.
 
 ## Running it
 
-Start the backend first ([backend/README.md](backend/README.md)), then:
+Start the backend first — one command, no scripts ([backend/README.md](backend/README.md)):
+
+```bash
+cd backend && docker compose up --build
+```
+
+then:
 
 ```bash
 flutter run
@@ -213,8 +219,9 @@ anything to the emulator. Either bake it in at build time:
 flutter build apk --release --dart-define=API_BASE_URL=http://192.168.1.23:8000
 ```
 
-…or set it on the device: **Server** on the sign-in screen, or
-**Settings → Server address** from the Home app bar. That override is remembered, wins over the compiled-in
+…or set it on the device: tap the PDF logo on the sign-in screen **5 times**
+to open the hidden server field, or the same via **Settings** once signed
+in. That override is remembered, wins over the compiled-in
 default, and clearing the field goes back to it — so a laptop that changed IP
 no longer means rebuilding the APK.
 
@@ -231,8 +238,8 @@ machine's address there when it changes.**
 ### When the address changes
 
 A DHCP lease can move the laptop to a new IP. Change it in the app rather than
-rebuilding: **Server** on the sign-in screen (and under Settings once signed
-in). It is reachable before sign-in on purpose — a wrong address is exactly what stops you signing in.
+rebuilding: tap the PDF logo on the sign-in screen **5 times** to reveal the
+hidden server field (reachable before sign-in on purpose — a wrong address is exactly what stops you signing in).
 
 Two things follow from switching: you are signed out (tokens are issued by one
 backend and mean nothing to another), and the new host still needs an entry in
@@ -260,8 +267,9 @@ Start the backend, then in another window:
 cd backend && powershell -ExecutionPolicy Bypass -File run-tunnel.ps1
 ```
 
-It prints a `https://something.trycloudflare.com` address. The tester pastes
-that into **Server** on the app's sign-in screen — no rebuild, because the
+It prints a `https://something.trycloudflare.com` address. The tester taps the
+PDF logo on the sign-in screen **5 times** to reveal the hidden server field
+and pastes it there — no rebuild, because the
 address is a runtime setting. HTTPS also means the Android cleartext allowlist
 does not come into it: `network_security_config.xml` only restricts plain HTTP.
 

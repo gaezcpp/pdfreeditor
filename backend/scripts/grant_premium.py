@@ -5,6 +5,7 @@ is a privilege escalation, and there is no reason to expose it to the internet
 just to make it convenient. Run it where the database lives.
 
     python -m scripts.grant_premium grant user@example.com --days 30
+    python -m scripts.grant_premium grant user@example.com --permanent
     python -m scripts.grant_premium status user@example.com
     python -m scripts.grant_premium revoke user@example.com
 
@@ -16,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import logging
 import sys
 from datetime import timedelta
 
@@ -28,6 +30,8 @@ from app.models.subscription import Subscription
 from app.models.user import User
 from app.services import quota, subscription
 
+logger = logging.getLogger(__name__)
+
 
 async def _find(db, email: str) -> User:
     result = await db.execute(select(User).where(User.email == email.strip().lower()))
@@ -37,14 +41,23 @@ async def _find(db, email: str) -> User:
     return user
 
 
-async def grant(email: str, days: int) -> None:
+async def grant(email: str, days: int | None, permanent: bool) -> None:
     async with SessionFactory() as db:
         user = await _find(db, email)
-        until = utcnow() + timedelta(days=days)
+        until = None if permanent else utcnow() + timedelta(days=days or 30)
         await subscription.grant_manual_premium(db, user.id, until=until)
         await db.commit()
+        logger.info(
+            "manual premium granted email=%s permanent=%s until=%s",
+            user.email,
+            permanent,
+            until,
+        )
         await db.refresh(user)
-        print(f"{user.email} is premium until {until:%Y-%m-%d %H:%M} UTC.")
+        if until is None:
+            print(f"{user.email} is premium permanently.")
+        else:
+            print(f"{user.email} is premium until {until:%Y-%m-%d %H:%M} UTC.")
         print("The app picks this up on its next GET /users/me/status:")
         print("pull to refresh on the home screen, or sign out and back in.")
 
@@ -67,6 +80,7 @@ async def revoke(email: str) -> None:
         # The cached flag on `users` is only ever written here, via the service.
         await subscription.sync_entitlement(db, user, now=now)
         await db.commit()
+        logger.info("manual premium revoked email=%s cancelled=%s", user.email, cancelled)
         print(f"Cancelled {cancelled} subscription(s); {user.email} is back to free.")
 
 
@@ -112,7 +126,10 @@ def main(argv: list[str] | None = None) -> None:
     granting = commands.add_parser("grant", help="Give an account premium.")
     granting.add_argument("email")
     granting.add_argument(
-        "--days", type=int, default=30, help="How long it lasts (default: 30)."
+        "--days", type=int, help="How long it lasts (default: 30)."
+    )
+    granting.add_argument(
+        "--permanent", action="store_true", help="Grant premium without expiry."
     )
 
     for name, help_text in (
@@ -131,7 +148,9 @@ def main(argv: list[str] | None = None) -> None:
         try:
             match args.command:
                 case "grant":
-                    await grant(args.email, args.days)
+                    if args.permanent and args.days is not None:
+                        raise SystemExit("Use either --days or --permanent, not both.")
+                    await grant(args.email, args.days, args.permanent)
                 case "revoke":
                     await revoke(args.email)
                 case "status":

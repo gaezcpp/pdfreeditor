@@ -29,6 +29,27 @@ enum PdfTool {
     icon: Icons.text_fields,
     endpoint: '/pdf/add-text',
     allowsMultiple: false,
+  ),
+  rotate(
+    label: 'Rotate pages',
+    description: 'Rotate selected pages by 90, 180, or 270 degrees.',
+    icon: Icons.rotate_right,
+    endpoint: '/pdf/rotate',
+    allowsMultiple: false,
+  ),
+  deletePages(
+    label: 'Delete pages',
+    description: 'Remove selected pages from a PDF.',
+    icon: Icons.delete_sweep_outlined,
+    endpoint: '/pdf/delete-pages',
+    allowsMultiple: false,
+  ),
+  reorderPages(
+    label: 'Reorder pages',
+    description: 'Set a new page order, such as 3,1,2.',
+    icon: Icons.swap_vert,
+    endpoint: '/pdf/reorder-pages',
+    allowsMultiple: false,
   );
 
   const PdfTool({

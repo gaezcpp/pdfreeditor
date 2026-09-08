@@ -2,9 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/api/server_address.dart';
 import '../../core/files/save_destination.dart';
-import 'server_address_sheet.dart';
 
 Future<void> showSettingsSheet(BuildContext context) {
   return showModalBottomSheet<void>(
@@ -20,7 +18,6 @@ class _SettingsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final address = context.watch<ServerAddress>();
     final destination = context.watch<SaveDestinationStore>();
     final theme = Theme.of(context);
 
@@ -35,16 +32,10 @@ class _SettingsSheet extends StatelessWidget {
               child: Text('Settings', style: theme.textTheme.titleLarge),
             ),
 
-            ListTile(
-              leading: const Icon(Icons.dns_outlined),
-              title: const Text('Server address'),
-              subtitle: Text(address.label),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                Navigator.pop(context);
-                showServerAddressSheet(context);
-              },
-            ),
+            // No server row on purpose: the backend starts with
+            // `docker compose up` and the app finds it via its compiled-in
+            // default. The escape hatch (5 taps on the sign-in logo) stays
+            // for the day a test device must point elsewhere.
 
             // The browser decides where downloads go; there is nothing here for
             // the user to choose, and offering the choice would be a lie.

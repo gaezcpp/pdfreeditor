@@ -20,4 +20,12 @@ class UserRepository {
       throw error.asApiException;
     }
   }
+
+  Future<void> requestPremium() async {
+    try {
+      await _client.dio.post<void>('/users/me/premium-request');
+    } on DioException catch (error) {
+      throw error.asApiException;
+    }
+  }
 }
