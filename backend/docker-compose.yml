@@ -1,58 +1,23 @@
-# PDFree backend: `docker compose up` from this directory is the whole setup.
-#
-# Default path is PostgreSQL (service `db`). SQLite stays available as an
-# offline fallback for local runs without Docker and for the pytest suite —
-# see .env.example.
-#
-# First run: copy .env.example to .env and set a real SECRET_KEY:
-#   docker run --rm python:3.11-slim python -c "import secrets; print(secrets.token_urlsafe(64))"
-#
-# Then:
-#   docker compose up --build        # API at http://localhost:8000 (+ /docs)
-#   docker compose down              # stop; add -v to also drop the database
-
+# PDFree API uses the host's shared PostgreSQL service.
 services:
-  db:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-pdfree}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pdfree}
-      POSTGRES_DB: ${POSTGRES_DB:-pdfree}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-pdfree}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   api:
     build: .
     restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
     ports:
       - "${PORT:-8000}:8000"
     env_file:
       - .env
     environment:
-      # Compose always talks to the `db` service above. Explicit `environment`
-      # wins over `env_file`, so DATABASE_URL from .env is ignored here on
-      # purpose — for the SQLite fallback, run outside Docker (see README).
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-pdfree}:${POSTGRES_PASSWORD:-pdfree}@db:5432/${POSTGRES_DB:-pdfree}
       SERVE_WEB_APP: ${SERVE_WEB_APP:-true}
     volumes:
-      # Working state: temp uploads + editor sessions. Kept on a volume so a
-      # rebuild does not strand anyone mid-edit.
       - apivar:/app/var
-      # Optional: serve the built Flutter web app from the same origin.
-      # Build it first with `flutter build web` in the project root, then the
-      # page and the API share http://localhost:8000 with no CORS setup.
-      # Missing directory is fine — the API simply runs API-only.
       - ../build/web:/app/build/web:ro
+    networks:
+      - shared-services
 
 volumes:
-  pgdata:
   apivar:
+
+networks:
+  shared-services:
+    external: true

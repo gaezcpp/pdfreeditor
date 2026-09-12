@@ -19,7 +19,7 @@
         <!-- A backend running on the device itself. -->
         <domain includeSubdomains="false">localhost</domain>
         <domain includeSubdomains="false">127.0.0.1</domain>
-        <!-- This laptop on the local network, for testing on a real phone. -->
-        <domain includeSubdomains="false">192.168.1.23</domain>
+        <!-- This server on the local network, for testing on a real phone. -->
+        <domain includeSubdomains="false">10.3.0.2</domain>
     </domain-config>
 </network-security-config>
